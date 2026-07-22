@@ -24,7 +24,6 @@ game_state = "START_MENU"
 score = 0
 lives = 3
 
-
 stars = []
 for _ in range(70):
     x = random.randint(0, SCREEN_WIDTH)
@@ -61,10 +60,16 @@ while running:
                 game_state = "PLAYING"
                 score = 0
                 lives = 3
+            elif game_state == "PLAYING" and event.key == pygame.K_p:
+                game_state = "PAUSED"
+            elif game_state == "PAUSED" and event.key == pygame.K_p:
+                game_state = "PLAYING"
             elif game_state == "GAME_OVER" and event.key == pygame.K_RETURN:
-                game_state = "START_MENU"
+                game_state = "PLAYING"
+                score = 0
+                lives = 3
 
-   
+  
     if game_state == "START_MENU":
         title_text = large_font.render("SPACE INVADERS", True, (0, 255, 255))
         screen.blit(title_text, (SCREEN_WIDTH // 2 - 190, SCREEN_HEIGHT // 2 - 120))
@@ -88,8 +93,8 @@ while running:
         btn_text = font.render("PLAY GAME", True, text_color)
         screen.blit(btn_text, (button_rect.x + 45, button_rect.y + 8))
 
-        info_text = small_font.render("Press ENTER or Click button to Start", True, (180, 180, 200))
-        screen.blit(info_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 + 100))
+        info_text = small_font.render("Press ENTER to Start | Press 'P' to Pause", True, (180, 180, 200))
+        screen.blit(info_text, (SCREEN_WIDTH // 2 - 175, SCREEN_HEIGHT // 2 + 100))
 
   
     elif game_state == "PLAYING":
@@ -99,12 +104,21 @@ while running:
         screen.blit(lives_surf, (SCREEN_WIDTH - 120, 15))
 
   
+    elif game_state == "PAUSED":
+        pause_text = large_font.render("GAME PAUSED", True, (255, 255, 0))
+        sub_text = font.render("Press 'P' to Resume", True, (255, 255, 255))
+        screen.blit(pause_text, (SCREEN_WIDTH // 2 - 160, SCREEN_HEIGHT // 2 - 50))
+        screen.blit(sub_text, (SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 20))
+
+
     elif game_state == "GAME_OVER":
-        over_text = large_font.render("GAME OVER", True, (255, 0, 0))
+        over_text = large_font.render("GAME OVER", True, (255, 50, 50))
         final_score = font.render(f"Final Score: {score}", True, (255, 255, 255))
+        restart_text = small_font.render("Press ENTER to Play Again", True, (0, 255, 0))
         
-        screen.blit(over_text, (SCREEN_WIDTH // 2 - 130, SCREEN_HEIGHT // 2 - 60))
-        screen.blit(final_score, (SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 + 10))
+        screen.blit(over_text, (SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT // 2 - 80))
+        screen.blit(final_score, (SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 - 20))
+        screen.blit(restart_text, (SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 40))
 
     pygame.display.flip()
     clock.tick(FPS)
