@@ -1,6 +1,4 @@
 # manager.py
-# Handles collision detection and game management for 2D Space Invaders
-
 class CollisionManager:
     def _init_(self):
         self.collision_count = 0
