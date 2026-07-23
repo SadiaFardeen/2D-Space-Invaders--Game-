@@ -1,4 +1,7 @@
-# manager.py
+import pygame
+import sys
+import random
+
 class CollisionManager:
     def _init_(self):
         self.collision_count = 0
