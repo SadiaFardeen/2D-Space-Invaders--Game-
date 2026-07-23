@@ -4,7 +4,6 @@ import random
 
 # from player import Player, Bullet
 # from enemy import EnemyManager
-# from manager import CollisionManager
 
 pygame.init()
 
