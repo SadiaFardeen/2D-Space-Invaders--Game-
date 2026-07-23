@@ -14,17 +14,16 @@ class CollisionManager:
         """Check collision between bullets and enemies"""
         destroyed_enemies = []
         
-        for bullet in bullets[:]:  # Iterate over a copy of the list
+        for bullet in bullets[:]:
             for enemy in enemies[:]:
                 if self.check_collision(bullet.rect, enemy.rect):
-                    # Remove bullet and enemy
                     if bullet in bullets:
                         bullets.remove(bullet)
                     if enemy in enemies:
                         enemies.remove(enemy)
                     destroyed_enemies.append(enemy)
                     self.collision_count += 1
-                    break  # Bullet destroyed, move to next bullet
+                    break
         
         return destroyed_enemies
     
@@ -52,7 +51,7 @@ class EnemyManager:
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.enemies = []
-        self.move_direction = 1  # 1 for right, -1 for left
+        self.move_direction = 1
         self.move_down_amount = 20
         self.move_speed = 2
         self.enemy_rows = 5
@@ -75,7 +74,6 @@ class EnemyManager:
     
     def update(self):
         """Update enemy positions"""
-        # Check if any enemy hits the edge
         edge_reached = False
         for enemy in self.enemies:
             if enemy.rect.right >= self.screen_width and self.move_direction > 0:
@@ -85,13 +83,11 @@ class EnemyManager:
                 edge_reached = True
                 break
         
-        # Change direction and move down if edge reached
         if edge_reached:
             self.move_direction *= -1
             for enemy in self.enemies:
                 enemy.rect.y += self.move_down_amount
         
-        # Move all enemies
         for enemy in self.enemies:
             enemy.rect.x += self.move_speed * self.move_direction
     
@@ -152,7 +148,7 @@ class ScoreManager:
     
     def get_combo_multiplier(self):
         """Get current combo multiplier (starts at 1, increases with combo)"""
-        return min(1 + self.combo // 5, 5)  # Max multiplier of 5
+        return min(1 + self.combo // 5, 5)
 
 
 class GameManager:
@@ -164,7 +160,7 @@ class GameManager:
         self.score_manager = ScoreManager()
         self.collision_manager = CollisionManager()
         self.enemy_manager = EnemyManager(screen_width, screen_height)
-        self.game_state = "START_MENU"  # START_MENU, PLAYING, PAUSED, GAME_OVER
+        self.game_state = "START_MENU"
         self.level = 1
         self.enemy_speed_multiplier = 1.0
         self.shield_active = False
@@ -191,7 +187,6 @@ class GameManager:
         """Increase game level and difficulty"""
         self.level += 1
         self.enemy_speed_multiplier = 1 + (self.level - 1) * 0.1
-        # Reset enemy manager with increased difficulty
         self.enemy_manager.move_speed = 2 * self.enemy_speed_multiplier
         self.enemy_manager.move_down_amount = 20 + (self.level - 1) * 2
     
@@ -210,12 +205,8 @@ class GameManager:
         """Update game state"""
         if self.game_state == "PLAYING":
             self.enemy_manager.update()
-            
-            # Check if all enemies are destroyed
             if self.enemy_manager.is_empty():
                 self.increase_level()
-                # Recreate enemies with new difficulty
-                # This will be handled by the main game loop
                 return "LEVEL_COMPLETE"
         
         return None
