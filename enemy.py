@@ -1,61 +1,62 @@
 import pygame
 import random
 
-# Screen size
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 
-# Alien size and speed
-ALIEN_MIN_SPEED = 2
-ALIEN_MAX_SPEED = 5
-ALIEN_WIDTH = 34
-ALIEN_HEIGHT = 26
-
-# Spawn time
-WAVE_INTERVAL_MS = 3000   
-ALIENS_PER_WAVE = 5
-
 class Alien(pygame.sprite.Sprite):
-    def __init__(self, image_path="assets/images/alien.png"):
-        super().__init__() 
-
-        try:
-            raw_image = pygame.image.load(image_path).convert_alpha()
-            self.image = pygame.transform.scale(raw_image, (ALIEN_WIDTH, ALIEN_HEIGHT))
-        except:
-            self.image = pygame.Surface((ALIEN_WIDTH, ALIEN_HEIGHT))
-            self.image.fill((220, 40, 40))  # Red rectangle fallback
-
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randint(0, SCREEN_WIDTH - self.rect.width)
-        self.rect.y = -self.rect.height  
-        self.speed = random.randint(ALIEN_MIN_SPEED, ALIEN_MAX_SPEED)
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((35, 25))
+        self.image.fill((220, 40, 40))  # Red alien box
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.is_dropping = False
+        self.drop_speed = 3
 
     def update(self):
-        self.rect.y += self.speed
+        if self.is_dropping:
+            self.rect.y += self.drop_speed
 
 
 class EnemyManager:
-    def __init__(self, alien_group, image_path="assets/images/alien.png",
-                 wave_interval_ms=WAVE_INTERVAL_MS,
-                 aliens_per_wave=ALIENS_PER_WAVE):
-      
-        self.alien_group = alien_group
-        self.image_path = image_path
-        self.wave_interval_ms = wave_interval_ms
-        self.aliens_per_wave = aliens_per_wave
-        self._last_wave_time = pygame.time.get_ticks()
+    def __init__(self, group):
+        self.group = group
+        self.direction = 1
+        self.speed = 2
+        self.spawn_wave()
 
     def spawn_wave(self):
-        """Create a fresh batch of Alien sprites and drop them into the group."""
-        for _ in range(self.aliens_per_wave):
-            alien = Alien(self.image_path)
-            self.alien_group.add(alien)
+        self.group.empty()
+        for row in range(3):
+            for col in range(8):
+                x = 100 + col * 70
+                y = 50 + row * 40
+                alien = Alien(x, y)
+                self.group.add(alien)
 
     def update(self):
-        now = pygame.time.get_ticks()
-        if now - self._last_wave_time >= self.wave_interval_ms:
-            self.spawn_wave()
-            self._last_wave_time = now
+        move_down = False
+        
+        for alien in self.group:
+            if not alien.is_dropping:
+                alien.rect.x += self.speed * self.direction
+                if alien.rect.right >= SCREEN_WIDTH - 20 or alien.rect.left <= 20:
+                    move_down = True
+            
+            alien.update()
 
-        self.alien_group.update()
+        if move_down:
+            self.direction *= -1
+            for alien in self.group:
+                if not alien.is_dropping:
+                    alien.rect.y += 12
+
+        # Randomly drop an alien
+        if len(self.group) > 0 and random.random() < 0.015:
+            normal_aliens = [a for a in self.group if not a.is_dropping]
+            if normal_aliens:
+                chosen_alien = random.choice(normal_aliens)
+                chosen_alien.is_dropping = True
+
+        if len(self.group) == 0:
+            self.spawn_wave()

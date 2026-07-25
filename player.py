@@ -1,27 +1,38 @@
 import pygame
 
+class Bullet:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x - 3, y, 6, 15)
+        self.speed = 8
+
+    def move(self):
+        self.rect.y -= self.speed
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, (255, 255, 0), self.rect)
+
+
 class Player:
     def __init__(self, x, y):
-        try:
-            self.image = pygame.image.load("assets/images/player.png")
-            self.image = pygame.transform.scale(self.image, (50, 40))
-        except:
-            self.image = pygame.Surface((50, 40), pygame.SRCALPHA)
-            pygame.draw.polygon(self.image, (0, 255, 255), [(25, 0), (0, 40), (50, 40)])
-            
-        self.rect = self.image.get_rect(center=(x, y))
-        self.speed = 7
-        self.powered = False
+        self.width = 50
+        self.height = 40
+        self.rect = pygame.Rect(x - self.width // 2, y, self.width, self.height)
+        self.speed = 6
 
     def move(self, keys):
+        # Full Left to Right movement fix
         if keys[pygame.K_LEFT] and self.rect.left > 0:
             self.rect.x -= self.speed
         if keys[pygame.K_RIGHT] and self.rect.right < 800:
             self.rect.x += self.speed
 
     def shoot(self):
-        from bullet import Bullet
         return Bullet(self.rect.centerx, self.rect.top)
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw(self, surface):
+        # Draw Space Ship
+        pygame.draw.polygon(surface, (0, 255, 128), [
+            (self.rect.centerx, self.rect.top),
+            (self.rect.left, self.rect.bottom),
+            (self.rect.right, self.rect.bottom)
+        ])
