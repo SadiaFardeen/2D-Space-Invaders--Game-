@@ -5,9 +5,6 @@ import os
 import time 
 from manager import GameManager
 
-# ==========================================
-# 1. GAME MANAGER CLASS (Lives & High Time)
-# ==========================================
 class GameManager:
     def __init__(self):
         self.lives = 3
@@ -20,7 +17,7 @@ class GameManager:
 
     def lose_life(self):
         self.lives -= 1
-        return self.lives <= 0  # True if lives run out
+        return self.lives <= 0 
 
     def start_timer(self):
         self.start_time = time.time()
@@ -56,16 +53,13 @@ class GameManager:
         self.start_timer()
 
 
-# ==========================================
-# 2. PLAYER CLASS
-# ==========================================
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.width = 40
         self.height = 20
         self.image = pygame.Surface((self.width, self.height))
-        self.image.fill((0, 255, 150))  # Green ship
+        self.image.fill((0, 255, 150)) 
         self.rect = self.image.get_rect(center=(x, y))
         self.speed = 6
 
@@ -82,9 +76,7 @@ class Player(pygame.sprite.Sprite):
         return Bullet(self.rect.centerx, self.rect.top)
 
 
-# ==========================================
-# 3. BULLET CLASS
-# ==========================================
+
 class Bullet:
     def __init__(self, x, y):
         self.rect = pygame.Rect(x - 2, y, 4, 10)
@@ -94,17 +86,14 @@ class Bullet:
         self.rect.y -= self.speed
 
     def draw(self, surface):
-        pygame.draw.rect(surface, (255, 255, 0), self.rect)  # Yellow bullet
+        pygame.draw.rect(surface, (255, 255, 0), self.rect)  
 
 
-# ==========================================
-# 4. ALIEN & ENEMY MANAGER
-# ==========================================
 class Alien(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.Surface((35, 25))
-        self.image.fill((220, 40, 40))  # Red box
+        self.image.fill((220, 40, 40))  
         self.rect = self.image.get_rect(topleft=(x, y))
         self.is_dropping = False
         self.drop_speed = 4
@@ -131,7 +120,7 @@ class EnemyManager:
                 self.group.add(alien)
 
     def update(self):
-        # Top aliens move horizontally
+        
         for alien in self.group:
             if not alien.is_dropping:
                 alien.rect.x += self.speed * self.direction
@@ -140,21 +129,17 @@ class EnemyManager:
 
             alien.update()
 
-        # Randomly select a red box to fall
+        
         if len(self.group) > 0 and random.random() < 0.025:
             normal_aliens = [a for a in self.group if not a.is_dropping]
             if normal_aliens:
                 chosen_alien = random.choice(normal_aliens)
                 chosen_alien.is_dropping = True
 
-        # Respawn new wave if all boxes are destroyed
+        
         if len(self.group) == 0:
             self.spawn_wave()
 
-
-# ==========================================
-# 5. MAIN GAME ENGINE
-# ==========================================
 pygame.init()
 
 SCREEN_WIDTH = 800
@@ -171,7 +156,6 @@ small_font = pygame.font.SysFont("Arial", 18)
 
 game_state = "START_MENU"
 
-# Background Starfield Effect
 stars = [[random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT), random.choice([1, 2, 3])] for _ in range(70)]
 
 def draw_stars():
@@ -183,7 +167,7 @@ def draw_stars():
         color = (255, 255, 255) if star[2] == 3 else (150, 150, 180)
         pygame.draw.circle(screen, color, (star[0], star[1]), star[2])
 
-# Setup Objects
+
 player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40)
 bullets = []
 
@@ -199,7 +183,6 @@ def reset_game():
     player.rect.centerx = SCREEN_WIDTH // 2
     player.rect.bottom = SCREEN_HEIGHT - 20
 
-# Main Game Loop
 running = True
 while running:
     screen.fill((10, 10, 30))
@@ -225,14 +208,13 @@ while running:
                 elif event.key == pygame.K_SPACE:
                     bullets.append(player.shoot())
             elif game_state == "PAUSED" and event.key == pygame.K_p:
-                # Pause break adjustment for accurate time
+                
                 game_manager.start_time = time.time() - game_manager.get_current_time()
                 game_state = "PLAYING"
             elif game_state == "GAME_OVER" and event.key == pygame.K_RETURN:
                 reset_game()
                 game_state = "PLAYING"
 
-    # ------------------ START MENU ------------------
     if game_state == "START_MENU":
         title_text = large_font.render("SPACE INVADERS", True, (0, 255, 255))
         screen.blit(title_text, (SCREEN_WIDTH // 2 - 180, SCREEN_HEIGHT // 2 - 140))
@@ -261,7 +243,6 @@ while running:
         info_text = small_font.render("Press ENTER to Start | SPACE to Shoot | 'P' to Pause", True, (180, 180, 200))
         screen.blit(info_text, (SCREEN_WIDTH // 2 - 200, SCREEN_HEIGHT // 2 + 100))
 
-    # ------------------ PLAYING STATE ------------------
     elif game_state == "PLAYING":
         game_manager.update_timer()
 
@@ -279,7 +260,6 @@ while running:
             if bullet.rect.bottom < 0:
                 bullets.remove(bullet)
 
-        # Bullet vs Alien Collision (Destroys Alien)
         for bullet in bullets[:]:
             hit_aliens = [alien for alien in alien_group if bullet.rect.colliderect(alien.rect)]
             if hit_aliens:
@@ -308,7 +288,6 @@ while running:
         screen.blit(time_surf, (SCREEN_WIDTH // 2 - 40, 15))
         screen.blit(high_surf, (SCREEN_WIDTH - 140, 15))
 
-    # ------------------ PAUSED STATE ------------------
     elif game_state == "PAUSED":
         player.draw(screen)
         alien_group.draw(screen)
@@ -320,7 +299,6 @@ while running:
         screen.blit(pause_text, (SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 50))
         screen.blit(sub_text, (SCREEN_WIDTH // 2 - 90, SCREEN_HEIGHT // 2 + 20))
 
-    # ------------------ GAME OVER STATE ------------------
     elif game_state == "GAME_OVER":
         over_text = large_font.render("GAME OVER", True, (255, 50, 50))
         survived_text = font.render(f"You Survived: {game_manager.get_current_time()}s", True, (255, 255, 255))
