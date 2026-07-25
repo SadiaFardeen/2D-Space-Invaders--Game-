@@ -3,6 +3,8 @@ import sys
 import random
 
 from player import Player
+from enemy import AlienWaveManager
+from manager import CollisionManager, ScoreManager
 
 pygame.init()
 
@@ -18,10 +20,8 @@ font = pygame.font.SysFont("Arial", 28)
 large_font = pygame.font.SysFont("Arial", 50)
 small_font = pygame.font.SysFont("Arial", 20)
 
-game_state = "START_MENU"
-score = 0
-lives = 3
 
+game_state = "START_MENU"
 
 stars = []
 for _ in range(70):
@@ -43,6 +43,21 @@ def draw_stars():
 player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 60)
 bullets = []
 
+alien_group = pygame.sprite.Group()
+enemy_wave_manager = AlienWaveManager(alien_group)
+collision_manager = CollisionManager()
+score_manager = ScoreManager()
+
+lives = 3
+
+def reset_game():
+    global lives, bullets
+    lives = 3
+    score_manager.reset()
+    bullets.clear()
+    enemy_wave_manager.reset()
+    player.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 60)
+
 running = True
 while running:
     screen.fill((10, 10, 30))
@@ -60,11 +75,8 @@ while running:
 
         if event.type == pygame.KEYDOWN:
             if game_state == "START_MENU" and event.key == pygame.K_RETURN:
+                reset_game()
                 game_state = "PLAYING"
-                score = 0
-                lives = 3
-                player.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 60)
-                bullets.clear()
             elif game_state == "PLAYING":
                 if event.key == pygame.K_p:
                     game_state = "PAUSED"
@@ -73,13 +85,10 @@ while running:
             elif game_state == "PAUSED" and event.key == pygame.K_p:
                 game_state = "PLAYING"
             elif game_state == "GAME_OVER" and event.key == pygame.K_RETURN:
+                reset_game()
                 game_state = "PLAYING"
-                score = 0
-                lives = 3
-                player.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 60)
-                bullets.clear()
 
-
+  
     if game_state == "START_MENU":
         title_text = large_font.render("SPACE INVADERS", True, (0, 255, 255))
         screen.blit(title_text, (SCREEN_WIDTH // 2 - 190, SCREEN_HEIGHT // 2 - 120))
@@ -90,11 +99,8 @@ while running:
             button_color = (0, 200, 255)
             text_color = (10, 10, 30)
             if mouse_click:
+                reset_game()
                 game_state = "PLAYING"
-                score = 0
-                lives = 3
-                player.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 60)
-                bullets.clear()
         else:
             button_color = (20, 40, 80)
             text_color = (255, 255, 255)
@@ -108,28 +114,49 @@ while running:
         info_text = small_font.render("Press ENTER to Start | SPACE to Shoot | 'P' to Pause", True, (180, 180, 200))
         screen.blit(info_text, (SCREEN_WIDTH // 2 - 220, SCREEN_HEIGHT // 2 + 100))
 
-
+  
     elif game_state == "PLAYING":
- 
+     
         keys = pygame.key.get_pressed()
         player.move(keys)
         player.draw(screen)
 
+    
+        enemy_wave_manager.update()
+        alien_group.draw(screen)
 
+  
         for bullet in bullets[:]:
             bullet.move()
             bullet.draw(screen)
             if bullet.rect.bottom < 0:
                 bullets.remove(bullet)
 
-        score_surf = font.render(f"Score: {score}", True, (255, 255, 255))
+  
+        for bullet in bullets[:]:
+            hit_aliens = pygame.sprite.spritecollide(bullet, alien_group, True)
+            if hit_aliens:
+                bullets.remove(bullet)
+                score_manager.add_score(10)
+
+        for alien in list(alien_group):
+            if alien.rect.top > SCREEN_HEIGHT or alien.rect.colliderect(player.rect):
+                alien.kill()
+                lives -= 1
+                if lives <= 0:
+                    score_manager.update_high_score()
+                    game_state = "GAME_OVER"
+
+  
+        score_surf = font.render(f"Score: {score_manager.get_score()}", True, (255, 255, 255))
         lives_surf = font.render(f"Lives: {lives}", True, (255, 50, 50))
         screen.blit(score_surf, (15, 15))
         screen.blit(lives_surf, (SCREEN_WIDTH - 120, 15))
 
+
     elif game_state == "PAUSED":
-      
         player.draw(screen)
+        alien_group.draw(screen)
         for bullet in bullets:
             bullet.draw(screen)
 
@@ -138,15 +165,16 @@ while running:
         screen.blit(pause_text, (SCREEN_WIDTH // 2 - 160, SCREEN_HEIGHT // 2 - 50))
         screen.blit(sub_text, (SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 20))
 
-  
     elif game_state == "GAME_OVER":
         over_text = large_font.render("GAME OVER", True, (255, 50, 50))
-        final_score = font.render(f"Final Score: {score}", True, (255, 255, 255))
+        final_score = font.render(f"Final Score: {score_manager.get_score()}", True, (255, 255, 255))
+        high_score = font.render(f"High Score: {score_manager.get_high_score()}", True, (255, 255, 0))
         restart_text = small_font.render("Press ENTER to Play Again", True, (0, 255, 0))
         
-        screen.blit(over_text, (SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT // 2 - 80))
-        screen.blit(final_score, (SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 - 20))
-        screen.blit(restart_text, (SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 40))
+        screen.blit(over_text, (SCREEN_WIDTH // 2 - 140, SCREEN_HEIGHT // 2 - 100))
+        screen.blit(final_score, (SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 - 40))
+        screen.blit(high_score, (SCREEN_WIDTH // 2 - 80, SCREEN_HEIGHT // 2 + 10))
+        screen.blit(restart_text, (SCREEN_WIDTH // 2 - 110, SCREEN_HEIGHT // 2 + 70))
 
     pygame.display.flip()
     clock.tick(FPS)
